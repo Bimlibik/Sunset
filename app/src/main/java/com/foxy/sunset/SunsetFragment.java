@@ -24,6 +24,8 @@ public class SunsetFragment extends Fragment {
     private int sunsetSkyColor;
     private int nightSkyColor;
 
+    private boolean flag = true;
+
     public static SunsetFragment newInstance() {
         return new SunsetFragment();
     }
@@ -45,7 +47,13 @@ public class SunsetFragment extends Fragment {
         sceneView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startAnimation();
+                if (flag) {
+                    startAnimation();
+                    flag = false;
+                } else {
+                    startSunriseAnimation();
+                    flag = true;
+                }
             }
         });
 
@@ -74,12 +82,44 @@ public class SunsetFragment extends Fragment {
                 .setDuration(1500);
         nightSkyAnimator.setEvaluator(new ArgbEvaluator());
 
-        // построение цепочки анимаций
+        // построение цепочки анимаций заката
         AnimatorSet animatorSet = new AnimatorSet();
         animatorSet
                 .play(heightAnimator)
                 .with(sunsetSkyAnimator)
                 .before(nightSkyAnimator);
+        animatorSet.start();
+    }
+
+    private void startSunriseAnimation() {
+        // анимация солнца
+        float sunYStart = skyView.getHeight();  // точка начала анимации солнца
+        float sunYEnd = sunView.getTop();   // конец анимации солнца
+
+
+        ObjectAnimator heightAnimator = ObjectAnimator
+                .ofFloat(sunView, "y", sunYStart, sunYEnd)
+                .setDuration(3000);
+        heightAnimator.setInterpolator(new AccelerateInterpolator()); // ускорение солнца
+
+        // анимация неба
+        ObjectAnimator sunsetSkyAnimator = ObjectAnimator
+                .ofInt(skyView, "backgroundColor", sunsetSkyColor, blueSkyColor)
+                .setDuration(3000);
+        sunsetSkyAnimator.setEvaluator(new ArgbEvaluator());  // для плавного перехода цветов
+
+        // ночное небо
+        ObjectAnimator nightSkyAnimator = ObjectAnimator
+                .ofInt(skyView, "backgroundColor", nightSkyColor, sunsetSkyColor)
+                .setDuration(1500);
+        nightSkyAnimator.setEvaluator(new ArgbEvaluator());
+
+        // построение цепочки анимаций заката
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet
+                .play(nightSkyAnimator)
+                .before(sunsetSkyAnimator)
+                .with(heightAnimator);
         animatorSet.start();
     }
 }
